@@ -127,7 +127,7 @@ export default defineComponent({
       <aside class="w-48 p-4 text-center">
         <SideMenu />
       </aside>
-      <main class="flex-1">
+      <main class="relative flex-1">
         <GraphCanvas v-if="viewerMode === 'graph'" @open-node-editor="openNodeEditor" />
         <JsonViewer v-if="viewerMode === 'json'" :json-data="store.graphData" />
         <div class="h-100vh pointer-events-none absolute top-0 right-0 z-10 flex max-h-screen flex-col items-end space-y-4 pt-4 pr-4 pb-4">
@@ -168,6 +168,43 @@ export default defineComponent({
             />
             <GraphRunner ref="graphRunnerRef" :class="{ hidden: !showChat }" :graph-data="store.graphData" @close="showChat = false" />
           </div>
+        </div>
+
+        <div class="pointer-events-none absolute bottom-4 left-4 z-10 flex flex-row space-x-2">
+          <button
+            class="pointer-events-auto cursor-pointer items-center rounded-md border-1 border-gray-300 bg-gray-100 px-2 py-1 text-black disabled:cursor-not-allowed disabled:bg-gray-300"
+            @click="store.undo()"
+            :disabled="!store.undoable"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-5"
+              :class="{ 'text-gray-400': !store.undoable }"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+            </svg>
+          </button>
+          <button
+            class="pointer-events-auto cursor-pointer items-center rounded-md border-1 border-gray-300 bg-gray-100 px-2 py-1 text-black disabled:cursor-not-allowed disabled:bg-gray-300"
+            @click="store.redo()"
+            :disabled="!store.redoable"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-5"
+              :class="{ 'text-gray-400': !store.redoable }"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" />
+            </svg>
+          </button>
         </div>
       </main>
     </div>

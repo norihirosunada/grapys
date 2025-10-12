@@ -2,27 +2,6 @@
   <AddNode />
 
   <hr class="my-1 border-t border-gray-400" />
-  <h2 class="text-left font-bold">History</h2>
-
-  <div class="mb-1 flex space-x-1">
-    <button
-      @click="store.undo"
-      :disabled="!store.undoable"
-      class="flex-1 rounded-l-full px-2.5 py-2 text-sm font-medium text-white transition-colors duration-200"
-      :class="store.undoable ? 'bg-sky-500 hover:bg-sky-700' : 'cursor-not-allowed bg-sky-200'"
-    >
-      Undo
-    </button>
-    <button
-      @click="store.redo"
-      :disabled="!store.redoable"
-      class="flex-1 rounded-r-full px-2.5 py-2 text-sm font-medium text-white transition-colors duration-200"
-      :class="store.redoable ? 'bg-sky-500 hover:bg-sky-700' : 'cursor-not-allowed bg-sky-200'"
-    >
-      Redo
-    </button>
-  </div>
-  <hr class="my-1 border-t border-gray-400" />
 
   <SideMenuSaveFirebase v-if="enableFirebase && firebaseStore.isSignedIn" />
   <SideMenuSaveBrowser v-else />
