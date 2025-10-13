@@ -152,12 +152,12 @@ export type GUILoopData = {
   while?: string | true;
   count?: number;
 };
-export type HistoryPayload = {
+export type GraphSnapshot = {
   loop: GUILoopData;
   nodes: GUINodeData[];
   edges: GUIEdgeData[];
 };
-export type HistoryData = { name: string; data: HistoryPayload };
+export type HistoryData = { name: string; data: GraphSnapshot };
 
 export type GUIMessage = {
   role: string;
@@ -167,7 +167,7 @@ export type GUIMessage = {
 
 export type GraphDataMetaData = {
   metadata?: {
-    data?: HistoryPayload;
+    data?: GraphSnapshot;
     forNested?: {
       output: Record<string, unknown>; // ComputedNode output
       outputs: InputOutputData[];

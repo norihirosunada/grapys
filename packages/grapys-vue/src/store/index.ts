@@ -6,7 +6,7 @@ import {
   UpdateStaticValue,
   UpdateNodePositionData,
   HistoryData,
-  HistoryPayload,
+  GraphSnapshot,
   GUILoopData,
 } from "../utils/gui/type";
 import { store2graphData } from "../utils/gui/graph";
@@ -18,7 +18,7 @@ import type { GraphData } from "graphai";
 
 export const useStore = defineStore("store", () => {
   const histories = ref<HistoryData[]>([]);
-  const currentData = ref<HistoryPayload>({
+  const currentData = ref<GraphSnapshot>({
     nodes: [],
     edges: [],
     loop: { loopType: "none" },
@@ -68,7 +68,7 @@ export const useStore = defineStore("store", () => {
   });
   // end of computed
 
-  const loadData = (data: HistoryPayload) => {
+  const loadData = (data: GraphSnapshot) => {
     currentData.value = data;
     pushDataToHistory("load", data);
   };
@@ -79,7 +79,7 @@ export const useStore = defineStore("store", () => {
       pushDataToHistory(name, data);
     }
   };
-  const pushDataToHistory = (name: string, data: HistoryPayload) => {
+  const pushDataToHistory = (name: string, data: GraphSnapshot) => {
     // don't call directory.
     histories.value.length = index.value;
     histories.value.push({ data, name });
