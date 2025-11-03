@@ -9,6 +9,7 @@ import { graphData as graphDataReducerPop } from "../graph/reducer_pop";
 import { graphData as graphDataTools } from "../graph/tools1";
 import { graphData as graphDataStreamTest } from "../graph/stream_test";
 import { graphData as graphDataStreamTest2 } from "../graph/stream_test2";
+import { graphNestedTemplate } from "../graph/nested_template";
 // import { graphData as graphDataReception } from "../graph/reception";
 // import { graphData as graphDataBrowserless } from "../graph/browserless";
 // import { graphData as graphDataImageGenerator } from "../graph/image_generator";
@@ -28,6 +29,7 @@ export const graphs: NestedGraphList = [
   // { name: "Browserless", graph: graphDataBrowserless, id: "GvpPnsQEGNWbq8SJ" },
   { name: "StreamTest", graph: graphDataStreamTest, id: "F554SdJ4YHahiq9s" },
   { name: "StreamTest2", graph: graphDataStreamTest2, id: "4LnRCCjHNcx56r5h" },
+  { name: "Nested(Simple)", graph: graphNestedTemplate, id: "1UwnpZcYjMY9YJ4r" },
   // { name: "ImageGenerator", graph: graphDataImageGenerator, id: "Ck2ETL93rwYXtMLv" },
 ];
 
