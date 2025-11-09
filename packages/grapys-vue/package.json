@@ -8,7 +8,9 @@
     "build": "vue-tsc -b && vite build",
     "lint": "eslint src --fix",
     "preview": "vite preview",
-    "format": "prettier --write '{src/**/*,*}.{js,ts,vue,json}'"
+    "format": "prettier --write '{src/**/*,*}.{js,ts,vue,json}'",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "dependencies": {
     "@graphai/anthropic_agent": "^2.0.11",
@@ -31,7 +33,14 @@
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^8.4.5",
+    "@storybook/addon-interactions": "^8.4.5",
+    "@storybook/test": "^8.4.5",
+    "@storybook/vue3": "^8.4.5",
+    "@storybook/vue3-vite": "^8.4.5",
+    "@tailwindcss/vite": "^4.1.16",
     "@vitejs/plugin-vue": "^5.1.1",
+    "storybook": "^8.4.5",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.4",
