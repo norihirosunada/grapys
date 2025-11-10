@@ -147,6 +147,7 @@ export const graphSimple: GraphData = {
       },
     },
     forNested: {
+      description: "Collects text and data values into a single array output.",
       output: {
         result_message: ".res.message",
       },
