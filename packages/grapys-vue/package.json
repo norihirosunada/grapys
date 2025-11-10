@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc -b && vite build && yarn storybook:build",
     "lint": "eslint src --fix",
     "preview": "vite preview",
     "format": "prettier --write '{src/**/*,*}.{js,ts,vue,json}'",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build"
+    "storybook:build": "storybook build --output-dir dist/storybook"
   },
   "dependencies": {
     "@graphai/anthropic_agent": "^2.0.11",
