@@ -21,9 +21,21 @@ const config: StorybookConfig = {
     mergeConfig(config, {
       plugins: [tailwindcss()],
       resolve: {
-        alias: {
-          "@": resolve(projectRoot, "src"),
-        },
+        alias: [
+          { find: "@", replacement: resolve(projectRoot, "src") },
+          {
+            find: /config\/project$/,
+            replacement: resolve(projectRoot, "src/config/game-dev.ts"),
+          },
+          {
+            find: /utils\/firebase\/SocialLogin$/,
+            replacement: resolve(projectRoot, ".storybook/mocks/SocialLogin.ts"),
+          },
+          {
+            find: /utils\/firebase\/firebase$/,
+            replacement: resolve(projectRoot, ".storybook/mocks/firebase.ts"),
+          },
+        ],
       },
     }),
 };
