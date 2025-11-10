@@ -12,6 +12,7 @@ export type ApplicationData = {
   params?: DefaultParamsType;
   isResult?: boolean;
   nestedGraphIndex?: number;
+  nestedGraphId?: string;
 };
 
 export type Position = { x: number; y: number };
@@ -171,6 +172,7 @@ export type GraphDataMetaData = {
     forNested?: {
       output: Record<string, unknown>; // ComputedNode output
       outputs: InputOutputData[];
+      description?: string;
     };
   };
 };

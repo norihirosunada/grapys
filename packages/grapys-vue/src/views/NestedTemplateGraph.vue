@@ -38,18 +38,48 @@
         </ul>
       </div>
     </div>
+    <div class="mt-3">
+      <h3 class="font-semibold">Nested Usage</h3>
+      <p class="mb-1 text-xs text-gray-500">Existing graph templates grouped by their nested graph references.</p>
+      <p v-if="!usageTree.length" class="text-sm text-gray-500">No nested relationships detected.</p>
+      <ul v-else class="list-inside list-disc">
+        <NestedGraphTreeNode v-for="node in usageTree" :key="node.id" :node="node" />
+      </ul>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { computed, defineComponent, ref } from "vue";
+import type { GraphData } from "graphai";
 
+import { graphs as templateGraphs } from "../graph";
 import { graphs as nestedGraphs } from "../graph/nested";
+import NestedGraphTreeNode, { NestedTreeNode } from "../components/NestedGraphTreeNode.vue";
 import { nestedGraphInputs } from "../utils/gui/utils";
+import type { GraphDataMetaData, ApplicationData } from "../utils/gui/type";
+
+type MetadataNode = {
+  nodeId: string;
+  data?: (ApplicationData & { nestedGraphId?: string }) | undefined;
+};
+
+type GraphEntry = {
+  id: string;
+  name: string;
+  graph: GraphData & GraphDataMetaData;
+};
 
 export default defineComponent({
+  components: {
+    NestedGraphTreeNode,
+  },
   setup() {
     const selected = ref(0);
+    const templateGraphEntries: GraphEntry[] = templateGraphs;
+    const nestedGraphEntries: GraphEntry[] = nestedGraphs;
+    const nestedGraphMap = new Map(nestedGraphEntries.map((entry) => [entry.id, entry]));
+    const templateGraphMap = new Map(templateGraphEntries.map((entry) => [entry.id, entry]));
     const currentGraph = computed(() => nestedGraphs[selected.value] ?? null);
     const inputs = computed(() => {
       const graph = currentGraph.value?.graph;
@@ -66,6 +96,79 @@ export default defineComponent({
       const mapping = currentGraph.value?.graph?.metadata?.forNested?.output ?? {};
       return Object.entries(mapping);
     });
+    const collectNestedChildren = (
+      graphData: GraphData & GraphDataMetaData,
+      visited: Set<string>,
+    ): NestedTreeNode[] => {
+      const metadataNodes = ((graphData.metadata?.data?.nodes ?? []) as MetadataNode[]) ?? [];
+      const graphNodes = graphData.nodes as Record<string, { graph?: GraphData & GraphDataMetaData }>;
+      const seen = new Set<string>();
+      const result: NestedTreeNode[] = [];
+
+      metadataNodes.forEach((node) => {
+        const nodeData = node.data;
+        if (!nodeData) {
+          return;
+        }
+
+        let nestedId: string | undefined = typeof nodeData.nestedGraphId === "string" ? nodeData.nestedGraphId : undefined;
+        let entry: GraphEntry | undefined;
+
+        if (nestedId) {
+          entry = nestedGraphMap.get(nestedId) ?? templateGraphMap.get(nestedId);
+        }
+
+        if (!nestedId && typeof nodeData.nestedGraphIndex === "number") {
+          entry = nestedGraphEntries[nodeData.nestedGraphIndex];
+          nestedId = entry?.id;
+        }
+
+        const inlineGraph = graphNodes?.[node.nodeId]?.graph;
+
+        if (!nestedId && inlineGraph) {
+          nestedId = node.nodeId;
+        }
+
+        if (!nestedId || seen.has(nestedId)) {
+          return;
+        }
+        seen.add(nestedId);
+
+        let type: NestedTreeNode["type"] = "unknown";
+        let children: NestedTreeNode[] = [];
+        const nextVisited = new Set(visited);
+        nextVisited.add(nestedId);
+
+        if (entry) {
+          type = nestedGraphMap.has(nestedId) ? "nested" : "template";
+          if (!visited.has(nestedId)) {
+            children = collectNestedChildren(entry.graph, nextVisited);
+          }
+        } else if (inlineGraph && !visited.has(nestedId)) {
+          children = collectNestedChildren(inlineGraph as GraphData & GraphDataMetaData, nextVisited);
+        }
+
+        result.push({
+          id: nestedId,
+          name: entry?.name ?? nestedId,
+          type,
+          children,
+        });
+      });
+
+      return result;
+    };
+
+    const usageTree = computed<NestedTreeNode[]>(() => {
+      return templateGraphEntries
+        .map<NestedTreeNode>((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          type: "template",
+          children: collectNestedChildren(entry.graph, new Set([entry.id])),
+        }))
+        .filter((node) => node.children.length > 0);
+    });
 
     return {
       selected,
@@ -75,6 +178,7 @@ export default defineComponent({
       outputs,
       description,
       outputMappings,
+      usageTree,
     };
   },
 });
