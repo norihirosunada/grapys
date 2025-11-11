@@ -7,7 +7,7 @@ import type { User } from "firebase/auth";
 import Layout from "./Layout.vue";
 import { useFirebaseStore } from "../store/firebase";
 
-const meta = {
+const meta: Meta<typeof Layout> = {
   title: "Components/Layout",
   component: Layout,
   tags: ["autodocs"],
@@ -20,11 +20,11 @@ const meta = {
       options: ["loading", "signedOut", "signedIn"],
       description: "Mocked Firebase authentication state for the story.",
     },
-  },
+  } as any,
   args: {
     authState: "loading",
-  },
-} satisfies Meta<typeof Layout>;
+  } as any,
+};
 
 export default meta;
 
@@ -58,7 +58,7 @@ export const FirebaseStates: Story = {
       components: { Layout },
       setup() {
         const firebaseStore = useFirebaseStore();
-        const authState = toRef(args, "authState");
+        const authState = toRef(args as { authState: string }, "authState");
 
         const applyAuthState = (state: string) => {
           if (state === "signedIn") {

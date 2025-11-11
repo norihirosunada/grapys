@@ -7,7 +7,7 @@ import Node2 from "./Node2";
 import { useStore } from "../store";
 import type { GUINodeData, UpdateNodePositionData, UpdateStaticValue } from "../utils/gui/type";
 
-const meta = {
+const meta: Meta<typeof Node2> = {
   title: "Components/Node2",
   component: Node2,
   tags: ["autodocs"],
@@ -18,8 +18,8 @@ const meta = {
       control: "text",
       description: "Optional image URL to showcase Node result rendering.",
     },
-  },
-} satisfies Meta<typeof Node2>;
+  } as any,
+};
 
 export default meta;
 
@@ -188,6 +188,6 @@ export const ImageResultNode: Story = {
     nodeIndex: 0,
     isConnectable: true,
     resultUrl: "https://placekitten.com/320/200",
-  },
+  } as any,
   render: createRender(),
 };
