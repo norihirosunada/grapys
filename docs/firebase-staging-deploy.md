@@ -1,47 +1,57 @@
-# Firebase ステージングデプロイ運用メモ
+# Firebase プレビューデプロイ運用メモ
 
-このドキュメントは、`.github/workflows/deploy-staging.yml` のセットアップ手順と運用ルールをまとめたものです。
-Pull Request の更新に合わせて Firebase Hosting のプレビュー URL を自動生成・更新し、レビュアーが常に最新の検証環境を確認できるようにします。
+このドキュメントは、`.github/workflows/deploy-preview.yml` のセットアップ手順と運用ルールをまとめたものです。
+Pull Request の更新に合わせて Firebase Hosting のプレビューURLを自動生成・更新し、レビュアーが常に最新の検証環境を確認できるようにします。
 
 ## ワークフローの概要
 
-- ワークフローファイル: `.github/workflows/deploy-staging.yml`
-- トリガー: PR の作成・更新・ラベル付与時 (`opened`, `synchronize`, `reopened`, `labeled`, `unlabeled`)
-- 主な処理:
-  1. PR のヘッドコミットをチェックアウト
-  2. `yarn install` → `yarn build`
-  3. `FirebaseExtended/action-hosting-deploy` で PR 番号を元にしたプレビュー チャンネルへデプロイ（有効期限 7 日）
-  4. プレビュー URL を PR に自動投稿（公式 Action がコメントします）
-- `no-preview` ラベルが付いている PR はスキップします。
-- 同じ PR 内での再実行は古いジョブをキャンセルし、常に最新コミットのみを配信します。
+- **ワークフローファイル**: `.github/workflows/deploy-preview.yml`
+- **トリガー**: PR の作成・更新・ラベル付与時 (`opened`, `synchronize`, `reopened`, `labeled`)
+- **デプロイ対象**: `packages/grapys-vue`
+
+### 主な処理
+
+1. `packages/grapys-vue` ディレクトリで `yarn install` を実行し、依存関係をインストールします。
+2. `packages/grapys-vue/src/config` ディレクトリに、設定ファイル `project.ts` のシンボリックリンクを作成します。
+3. `packages/grapys-vue` ディレクトリで `yarn build` を実行します。
+4. `FirebaseExtended/action-hosting-deploy` を使用し、PR番号に基づいたプレビューチャンネル (`pr-<PR番号>`) へデプロイします（有効期限7日）。
+5. デプロイ完了後、プレビューURLがPRに自動でコメントされます。
+
+### 制御
+
+- `no-preview` ラベルが付いているPRはデプロイをスキップします。
+- 同じPR内での再実行は、古いジョブをキャンセルし、常に最新のコミットのみをデプロイします。
 
 ## セットアップ手順
 
-1. **サービスアカウントの準備**
-   - Firebase Hosting へデプロイできるロール（`Firebase Hosting Admin` など）を付与したサービスアカウントを作成。
-   - JSON キーを GitHub Secrets に `FIREBASE_SERVICE_ACCOUNT` という名前で保存。
+### 1. GitHub Secrets の設定
 
-2. **プロジェクト ID の設定**
-   - デプロイ先 Firebase プロジェクトの ID を `FIREBASE_PROJECT_ID` シークレットとして登録。
+リポジトリの `Settings > Secrets and variables > Actions` で、以下のシークレットを登録します。
 
-3. **Hosting ターゲットの確認**
-   - ワークフローは `hosting:staging` ターゲットを前提としています。
-   - `firebase.json` / `.firebaserc` 側で `staging` ターゲットが定義されていない場合は、ターゲットを追加するか、`FIREBASE_HOSTING_TARGET` 環境変数を変更してください。
+- **`FIREBASE_SERVICE_ACCOUNT`**: FirebaseプロジェクトのサービスアカウントのJSONキー。
+  - **権限**: `Firebase Hosting Admin` ロールが必要です。
+- **`FIREBASE_PROJECT_ID`**: デプロイ先のFirebaseプロジェクトID。
 
-4. **PR ラベル運用**
-   - プレビューを生成したくない PR（例: ドキュメントのみ）は `no-preview` ラベルを付けてスキップできます。
+### 2. ワークフローの権限
+
+ワークフローファイル (`deploy-preview.yml`) の `permissions` セクションには、以下の権限が必要です。
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write   # PRへのコメント投稿に必要
+  checks: write          # デプロイアクションのCheck Run作成に必要
+  id-token: write        # (将来的なWIF認証用)
+```
+
+### 3. firebase.json の確認
+
+このワークフローは、`packages/grapys-vue/firebase.json` に定義されたデフォルトのホスティング設定を使用します。特定の `target` は指定していません。
 
 ## 運用フロー
 
-1. 開発者が PR を作成または更新すると、自動でプレビュー チャンネル `pr-<PR番号>` にデプロイされます。
-2. デプロイ完了後、公式 Action が PR にプレビュー URL をコメントします。同じ PR の再実行時は同一 URL が上書き更新されます。
-3. プレビュー チャンネルは 7 日後に自動失効します。チャンネル数の上限を超えそうな場合は `expires` の短縮や `no-preview` ラベル運用で調整してください。
+1. 開発者がPRを作成または更新すると、ワークフローが自動的に実行されます。
+2. デプロイが完了すると、アクションがPRにプレビューURLをコメントします。同じPRで再度デプロイが行われた場合、コメントは更新されます。
+3. プレビューは7日後に自動で失効します。
 
-## 残タスク / フォローアップ
-
-- [ ] Firebase 側で `staging` ターゲットを定義し、必要であれば CDN 設定やリライト設定を確認する。
-- [ ] サービスアカウントの権限をチームでレビューし、最小権限化を図る。
-- [ ] プレビュー URL を Slack 等へも通知したい場合は、別途通知ワークフローを用意する。
-- [ ] PR クローズ時に即時削除したい場合は、`firebase hosting:channel:delete` を呼ぶクリーンアップ ワークフローを追加する。
-
-この運用で、PR ごとに自動生成されるプレビュー環境を使い、レビューサイクルを高速化できます。
+この運用により、PRごとに自動生成されるプレビュー環境を用いて、レビューサイクルを高速化できます。
