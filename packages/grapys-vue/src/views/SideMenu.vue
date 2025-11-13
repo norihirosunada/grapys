@@ -30,6 +30,9 @@
   <hr class="my-1 border-t border-gray-400" />
 
   <TemplateGraph @set-graph="setGraph" />
+  <div class="mt-2">
+    <TemplateNestedGraph />
+  </div>
   <hr class="my-1 border-t border-gray-400" />
   <h2 class="text-left font-bold">Download</h2>
   <div>
@@ -89,6 +92,7 @@ import SideMenuSaveBrowser from "./SideMenuSaveBrowser.vue";
 import SideMenuSaveFirebase from "./SideMenuSaveFirebase.vue";
 import DataLoader from "./DataLoader.vue";
 import TemplateGraph from "./TemplateGraph.vue";
+import TemplateNestedGraph from "./TemplateNestedGraph.vue";
 import ApiKey from "./ApiKey.vue";
 
 import GoogleSignin from "../components/SigninButton.vue";
@@ -104,6 +108,7 @@ export default defineComponent({
     SideMenuSaveBrowser,
     SideMenuSaveFirebase,
     TemplateGraph,
+    TemplateNestedGraph,
     GoogleSignin,
     DataLoader,
   },
