@@ -11,3 +11,5 @@ node_modules
 packages/grapys-vue/.firebase/
 packages/grapys-vue/.firebaserc
 packages/grapys-vue/tsconfig.tsbuildinfo
+
+.serena
