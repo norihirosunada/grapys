@@ -7,6 +7,7 @@ import { anthropicAgent } from "@graphai/anthropic_agent";
 import { browserlessAgent } from "@graphai/browserless_agent";
 
 import tinyswallowAgent, { modelLoad, loadEngine, CallbackReport } from "../agents/tinyswallow";
+import { codeRunnerAgent } from "../agents/code_runner";
 import { useTextInputEvent } from "../agents/event_react";
 import { useLocalStore } from "../store";
 import { useStreamData } from "../utils/react-plugin/stream";
@@ -19,6 +20,7 @@ const GraphRunner: React.FC<{ graphData: GraphData }> = ({ graphData }) => {
   const [isRunning, setIsRunning] = useState(false);
   const streamNodes = useLocalStore((state) => state.streamNodes);
   const resultNodes = useLocalStore((state) => state.resultNodes);
+  const currentData = useLocalStore((state) => state.currentData);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   // チャットUIの開閉状態を管理
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -63,8 +65,10 @@ const GraphRunner: React.FC<{ graphData: GraphData }> = ({ graphData }) => {
     setIsRunning(true);
     // チャットを開始したら自動的にUIを開く
     setIsChatOpen(true);
+    const graphDataWithMeta = { ...graphData, metadata: { ...(graphData.metadata ?? {}), data: currentData } };
+
     const graph = new GraphAI(
-      graphData,
+      graphDataWithMeta,
       {
         ...agents,
         openAIAgent,
@@ -73,6 +77,7 @@ const GraphRunner: React.FC<{ graphData: GraphData }> = ({ graphData }) => {
         eventAgent,
         tinyswallowAgent,
         browserlessAgent,
+        codeRunnerAgent,
       },
       {
         agentFilters,
@@ -88,7 +93,7 @@ const GraphRunner: React.FC<{ graphData: GraphData }> = ({ graphData }) => {
     } catch (error) {
       console.log(error);
     }
-  }, [eventAgent, streamPlugin, chatMessagePlugin, graphData, streamNodes]);
+  }, [eventAgent, streamPlugin, chatMessagePlugin, graphData, streamNodes, currentData, resultNodes]);
 
   const abort = useCallback(() => {
     try {
