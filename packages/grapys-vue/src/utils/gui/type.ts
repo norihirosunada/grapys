@@ -152,10 +152,13 @@ export type GUILoopData = {
   while?: string | true;
   count?: number;
 };
+export type AgentProfileRegistry = Record<string, AgentProfile>;
+
 export type HistoryPayload = {
   loop: GUILoopData;
   nodes: GUINodeData[];
   edges: GUIEdgeData[];
+  registry?: AgentProfileRegistry;
 };
 export type HistoryData = { name: string; data: HistoryPayload };
 
@@ -172,6 +175,7 @@ export type GraphDataMetaData = {
       output: Record<string, unknown>; // ComputedNode output
       outputs: InputOutputData[];
     };
+    registry?: AgentProfileRegistry;
   };
 };
 

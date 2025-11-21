@@ -56,6 +56,7 @@ export const graphToGUIData = (graphData: GraphData & GraphDataMetaData) => {
       rawEdge: edges,
       rawNode: nodes,
       loop: loop2loop(loop ?? {}),
+      registry: graphData?.metadata?.data?.registry ?? graphData?.metadata?.registry ?? {},
     };
   }
 
@@ -165,6 +166,7 @@ export const graphToGUIData = (graphData: GraphData & GraphDataMetaData) => {
     rawEdge,
     rawNode,
     loop: loop2loop(graphLoop ?? {}),
+    registry: graphData?.metadata?.registry ?? {},
   };
 };
 
@@ -173,12 +175,13 @@ export const edgeEnd2agentProfile = (
   nodeRecords: GUINodeDataRecord,
   sorceOrTarget: "source" | "target",
   nestedGraphs: NestedGraphList,
+  agentProfileRecord: Record<string, AgentProfile> = agentProfiles,
 ) => {
   const node = nodeRecords[edgeEndPointData.nodeId];
   if (node && node.type === "computed") {
     const specializedAgent = node.data.guiAgentId ?? ""; // undefined is static node.
 
-    const profile = agentProfiles[specializedAgent];
+    const profile = agentProfileRecord[specializedAgent];
     const IOData = (() => {
       // output
       if (sorceOrTarget === "source") {
@@ -369,7 +372,13 @@ const sameTargetEdge = (edge1: EdgeData | GUIEdgeData, edge2: EdgeData | GUIEdge
   return edge1.target.nodeId === edge2.target.nodeId && edge1.target.index === edge2.target.index;
 };
 
-export const isEdgeConnectale = (expectEdge: GUIEdgeData | null, edges: GUIEdgeData[], nodeRecords: GUINodeDataRecord, nestedGraphs: NestedGraphList) => {
+export const isEdgeConnectale = (
+  expectEdge: GUIEdgeData | null,
+  edges: GUIEdgeData[],
+  nodeRecords: GUINodeDataRecord,
+  nestedGraphs: NestedGraphList,
+  agentProfileRecord: Record<string, AgentProfile> = agentProfiles,
+) => {
   if (!expectEdge) {
     return false;
   }
@@ -383,7 +392,7 @@ export const isEdgeConnectale = (expectEdge: GUIEdgeData | null, edges: GUIEdgeD
   const existanceEdges = edges.filter((edge) => {
     return sameTargetEdge(edge, expectEdge);
   });
-  const profile = edgeEnd2agentProfile(expectEdge.target, nodeRecords, "target", nestedGraphs);
+  const profile = edgeEnd2agentProfile(expectEdge.target, nodeRecords, "target", nestedGraphs, agentProfileRecord);
   if (!profile) {
     // maybe static node
     return true;

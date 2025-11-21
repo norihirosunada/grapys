@@ -8,6 +8,7 @@ import {
   HistoryData,
   HistoryPayload,
   GUILoopData,
+  AgentProfileRegistry,
 } from "../utils/gui/type";
 import { store2graphData } from "../utils/gui/graph";
 import { defineStore } from "pinia";
@@ -22,13 +23,14 @@ export const useStore = defineStore("store", () => {
     nodes: [],
     edges: [],
     loop: { loopType: "none" },
+    registry: {},
   });
   const index = ref(0);
 
   const graphAIResults = ref<Record<string, unknown>>({});
 
   const reset = () => {
-    updateData([], [], { loopType: "none" }, "reset", true);
+    updateData([], [], { loopType: "none" }, "reset", true, {});
   };
 
   const nodes = computed(() => {
@@ -69,11 +71,18 @@ export const useStore = defineStore("store", () => {
   // end of computed
 
   const loadData = (data: HistoryPayload) => {
-    currentData.value = data;
-    pushDataToHistory("load", data);
+    currentData.value = { ...data, registry: data.registry ?? {} };
+    pushDataToHistory("load", currentData.value);
   };
-  const updateData = (nodeData: GUINodeData[], edgeData: GUIEdgeData[], loopData: GUILoopData, name: string, saveHistory: boolean) => {
-    const data = { nodes: nodeData, edges: edgeData, loop: loopData };
+  const updateData = (
+    nodeData: GUINodeData[],
+    edgeData: GUIEdgeData[],
+    loopData: GUILoopData,
+    name: string,
+    saveHistory: boolean,
+    registryData: AgentProfileRegistry = currentData.value.registry ?? {},
+  ) => {
+    const data: HistoryPayload = { nodes: nodeData, edges: edgeData, loop: loopData, registry: registryData };
     currentData.value = data;
     if (saveHistory) {
       pushDataToHistory(name, data);
@@ -90,15 +99,15 @@ export const useStore = defineStore("store", () => {
     pushDataToHistory("position", currentData.value);
   };
 
-  const initData = (nodeData: GUINodeData[], edgeData: GUIEdgeData[], loopData: GUILoopData) => {
-    const data = { nodes: nodeData, edges: edgeData, loop: loopData };
+  const initData = (nodeData: GUINodeData[], edgeData: GUIEdgeData[], loopData: GUILoopData, registryData: AgentProfileRegistry = {}) => {
+    const data: HistoryPayload = { nodes: nodeData, edges: edgeData, loop: loopData, registry: registryData };
     currentData.value = data;
     // this time, node position is not set. save after mounted.
   };
 
   const initFromGraphData = (graph: GraphData) => {
-    const { rawEdge, rawNode, loop: loopData } = graphToGUIData(graph);
-    initData(rawNode, rawEdge, loopData);
+    const { rawEdge, rawNode, loop: loopData, registry: registryData } = graphToGUIData(graph);
+    initData(rawNode, rawEdge, loopData, registryData);
   };
 
   // node
@@ -239,6 +248,13 @@ export const useStore = defineStore("store", () => {
     updateStaticNodeValue,
     updateNestedGraph,
     updateLoop,
+
+    customAgentRegistry: computed(() => currentData.value.registry ?? {}),
+    addCustomAgentProfile: (id: string, profile: AgentProfileRegistry[string]) => {
+      const registry = { ...(currentData.value.registry ?? {}) };
+      registry[id] = profile;
+      updateData([...nodes.value], [...edges.value], { ...loop.value }, "addCustomAgent", true, registry);
+    },
 
     undo,
     redo,
