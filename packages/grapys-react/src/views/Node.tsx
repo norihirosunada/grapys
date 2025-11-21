@@ -42,6 +42,7 @@ const Node: React.FC<NodeProps> = ({
   onOpenNodeMenu,
 }) => {
   const agentParams = nodeData.type === "computed" ? agentProfiles[nodeData.data.guiAgentId ?? ""] : staticNodeParams;
+  const agentOptions: string[] = agentParams.agents ?? [];
 
   const thisRef = useRef<HTMLDivElement>(null);
   const inputsRef = useRef<HTMLDivElement[]>([]);
@@ -224,10 +225,10 @@ const Node: React.FC<NodeProps> = ({
       </div>
 
       <div>
-        {agentParams.agents && (
+        {agentOptions.length > 0 && (
           <select value={agentIndex} onChange={updateAgentIndex}>
-            {Object.entries(agentParams.agents).map(([key, agent]) => (
-              <option key={key} value={key}>
+            {agentOptions.map((agent, optionIndex) => (
+              <option key={agent} value={optionIndex}>
                 {agent}
               </option>
             ))}

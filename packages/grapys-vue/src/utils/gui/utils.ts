@@ -5,7 +5,6 @@ import {
   GUINodeDataRecord,
   GUINearestData,
   EdgeData,
-  AgentProfile,
   InputOutputData,
   NewEdgeStartEventData,
   NewEdgeData,

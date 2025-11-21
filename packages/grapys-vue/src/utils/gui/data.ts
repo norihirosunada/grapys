@@ -417,6 +417,8 @@ export const builtinAgentProfiles: Record<string, AgentProfile> = Object.values(
   {},
 );
 
+export const agentProfiles = builtinAgentProfiles;
+
 export const staticNodeParams: AgentProfile = {
   inputs: [{ name: "update" }],
   outputs: [{ name: "value" }],
