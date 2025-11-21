@@ -15,6 +15,8 @@
   - `yarn lint` / `yarn format`: ESLint / Prettier を各パッケージで実行。
 - パッケージ単位:
   - `yarn workspace grapys-vue dev`（または `grapys-react dev`）: Vite 開発サーバ起動。
+  - `yarn workspace grapys-vue build`: Vue ライブラリ本体のビルド。
+  - `yarn workspace grapys-react build`: React ラッパーパッケージのビルド。
   - `yarn workspace <pkg> build|preview|lint|format`: 各種タスク。
 - ローカル設定: `project.ts` をサンプルから作成
   - `cp packages/grapys-vue/src/config/game-dev.ts packages/grapys-vue/src/config/project.ts`
@@ -39,3 +41,7 @@
 - 秘密情報はコミットしない（`.env` は Git 追跡外）。
 - Node 20+ を推奨（CI は 20/22）。パッケージ管理は Yarn（v1）を使用。
 - `grapys-react` のシンボリックリンク配下は直接編集せず、必ず `grapys-vue` 側を更新。
+
+# ExecPlans
+ 
+When writing complex features or significant refactors, use an ExecPlan (as described in .agent/PLANS_ja.md) from design to implementation.
