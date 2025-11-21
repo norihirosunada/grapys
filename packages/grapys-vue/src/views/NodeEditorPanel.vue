@@ -45,7 +45,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, watch } from "vue";
 import { useStore } from "../store";
-import { agentProfiles, staticNodeParams } from "../utils/gui/data";
+import { staticNodeParams } from "../utils/gui/data";
 import type { GUINodeData, AgentProfile, UpdateStaticValue } from "../utils/gui/type";
 import NodeStaticValue from "./NodeStaticValue.vue";
 import NodeComputedParams from "./NodeComputedParams.vue";
@@ -67,7 +67,7 @@ export default defineComponent({
     const agentProfile = computed<AgentProfile | typeof staticNodeParams | undefined>(() => {
       const node = currentNode.value;
       if (!node) return undefined;
-      return node.type === "computed" ? agentProfiles[node.data.guiAgentId ?? ""] : staticNodeParams;
+      return node.type === "computed" ? store.agentProfiles[node.data.guiAgentId ?? ""] : staticNodeParams;
     });
 
     const headerAgentName = computed(() => {

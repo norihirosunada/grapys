@@ -12,10 +12,10 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent, PropType, computed } from "vue";
 import type { GUINodeData } from "../utils/gui/type";
 
-import { agentProfiles } from "../utils/gui/data";
+import { useStore } from "../store";
 import NodeComputedParam from "./NodeComputedParam.vue";
 
 export default defineComponent({
@@ -34,8 +34,11 @@ export default defineComponent({
   },
   emits: ["focusEvent", "blurEvent", "updateValue"],
   setup(props, ctx) {
-    const profile = agentProfiles[props.nodeData.data.guiAgentId ?? ""];
-    const { params } = profile;
+    const store = useStore();
+    const params = computed(() => {
+      const profile = store.agentProfiles[props.nodeData.data.guiAgentId ?? ""];
+      return profile?.params ?? [];
+    });
 
     const focusEvent = () => {
       ctx.emit("focusEvent");

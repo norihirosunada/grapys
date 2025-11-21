@@ -59,7 +59,7 @@ import { defineComponent, ref, watchEffect, computed, PropType, onMounted, watch
 import { useStore } from "../store";
 import type { GUINodeData, GUINearestData, NewEdgeEventDirection } from "../utils/gui/type";
 import { getClientPos, getNodeSize, getTransformStyle, nestedGraphInputs } from "../utils/gui/utils";
-import { agentProfiles, staticNodeParams } from "../utils/gui/data";
+import { staticNodeParams } from "../utils/gui/data";
 import { nodeMainClass, nodeHeaderClass, nodeOutputClass, nodeInputClass } from "../utils/gui/classUtils";
 // import { graphs } from "../graph";
 
@@ -105,7 +105,12 @@ export default defineComponent({
   setup(props, ctx) {
     const store = useStore();
 
-    const agentProfile = props.nodeData.type === "computed" ? agentProfiles[props.nodeData.data.guiAgentId ?? ""] : staticNodeParams;
+    const availableAgentProfiles = computed(() => store.agentProfiles);
+    const agentProfile = computed(() => {
+      return props.nodeData.type === "computed"
+        ? availableAgentProfiles.value[props.nodeData.data.guiAgentId ?? ""]
+        : staticNodeParams;
+    });
 
     const thisRef = ref<HTMLElement | null>(null);
     const inputsRef = ref<HTMLElement[]>([]);
@@ -268,7 +273,7 @@ export default defineComponent({
       ctx.emit("openNodeEditMenu", event);
     };
     const updateAgentIndex = () => {
-      const agent = agentProfile?.agents?.[agentIndex.value];
+      const agent = agentProfile.value?.agents?.[agentIndex.value];
       // this is not static node value, but it works
       ctx.emit("updateStaticNodeValue", { agentIndex: agentIndex.value, agent });
     };
@@ -299,18 +304,18 @@ export default defineComponent({
     );
 
     const inputs = computed(() => {
-      if (agentProfile.isNestedGraph) {
+      if (agentProfile.value?.isNestedGraph) {
         // not do mapAgent
-        return nestedGraphInputs(nestedGraph.value.graph);
+        return nestedGraphInputs(nestedGraph.value.graph, availableAgentProfiles.value);
       }
-      return agentProfile.inputs;
+      return agentProfile.value?.inputs ?? [];
     });
     const outputs = computed(() => {
       // not do mapAgent
-      if (agentProfile.isNestedGraph) {
-        return nestedGraph.value.graph?.metadata?.forNested?.outputs ?? agentProfile.outputs;
+      if (agentProfile.value?.isNestedGraph) {
+        return nestedGraph.value.graph?.metadata?.forNested?.outputs ?? agentProfile.value.outputs;
       }
-      return agentProfile.outputs;
+      return agentProfile.value?.outputs ?? [];
     });
 
     return {
