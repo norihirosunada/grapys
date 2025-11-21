@@ -111,6 +111,7 @@ import { browserlessAgent } from "@graphai/browserless_agent";
 
 import tinyswallowAgent, { modelLoad, loadEngine, CallbackReport } from "../agents/tinyswallow";
 import { textInputEvent } from "../agents/event";
+import sandboxRunnerAgent from "../agents/sandbox_runner";
 
 import { getGraphConfigs } from "../graph";
 //import { buildFirebaseStreamFilter } from "./firebase";
@@ -171,6 +172,7 @@ export default defineComponent({
           eventAgent,
           tinyswallowAgent,
           browserlessAgent,
+          sandboxRunnerAgent,
         },
         {
           agentFilters,

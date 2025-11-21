@@ -378,6 +378,29 @@ export const testAgentProfiles: Record<string, AgentProfile> = {
   },
 };
 
+export const runtimeAgentProfiles: Record<string, AgentProfile> = {
+  sandboxRunnerAgent: {
+    agent: "sandboxRunnerAgent",
+    inputs: [
+      { name: "payload", type: "data" },
+      { name: "context", type: "data" },
+    ],
+    outputs: [
+      { name: "result", type: "data" },
+      { name: "logs", type: "array" },
+      { name: "usedDependencies", type: "array" },
+      { name: "runtimeMs", type: "int" },
+      { name: "warnings", type: "array" },
+    ],
+    params: [
+      { name: "code", type: "text" },
+      { name: "language", type: "enum", values: ["js", "ts"] },
+      { name: "timeoutMs", type: "int", defaultValue: 5000 },
+      { name: "dependencies", type: "data" },
+    ],
+  },
+};
+
 export const nestedAgentProfiles: Record<string, AgentProfile> = {
   nestedAgent: {
     agent: "nestedAgent",
@@ -403,6 +426,7 @@ export const agentProfilesCategory: Record<string, Record<string, AgentProfile>>
   copy: copyAgentProfiles,
   array: arrayAgentProfiles,
   string: stringAgentProfiles,
+  runtime: runtimeAgentProfiles,
 };
 if (!restrictedFeature) {
   agentProfilesCategory.service = serviceAgentProfiles;
