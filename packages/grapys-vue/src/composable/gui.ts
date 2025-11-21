@@ -2,6 +2,7 @@ import { Position, NewEdgeStartEventData, NewEdgeData, ClosestNodeData, GUINeare
 import { ref, computed } from "vue";
 import { useStore } from "../store";
 import { edgeStartEventData, edgeUpdateEventData, edgeEndEventData, pickNearestNode, pickNearestConnect, isEdgeConnectale } from "../utils/gui/utils";
+import { mergeAgentProfileCatalog } from "../utils/gui/registry";
 
 export const useNewEdge = () => {
   const store = useStore();
@@ -59,7 +60,8 @@ export const useNewEdge = () => {
   });
 
   const edgeConnectable = computed(() => {
-    return isEdgeConnectale(expectEdge.value, store.edges, store.nodeRecords, store.nestedGraphs);
+    const { profiles } = mergeAgentProfileCatalog(store.customAgentRegistry);
+    return isEdgeConnectale(expectEdge.value, store.edges, store.nodeRecords, store.nestedGraphs, profiles);
   });
 
   return {
