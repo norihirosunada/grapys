@@ -312,6 +312,26 @@ export const serviceAgentProfiles: Record<string, AgentProfile> = {
   },
 };
 
+export const codeAgentProfiles: Record<string, AgentProfile> = {
+  codeRunnerAgent: {
+    agent: "codeRunnerAgent",
+    inputs: [
+      { name: "payload", type: "data" },
+      { name: "context", type: "data" },
+    ],
+    outputs: [
+      { name: "result", type: "data" },
+      { name: "logs", type: "array" },
+    ],
+    params: [
+      { name: "code", type: "text" },
+      { name: "timeoutMs", type: "int", defaultValue: 5000 },
+      { name: "dependencies", type: "array" },
+      { name: "language", type: "enum", values: ["typescript", "javascript"], defaultValue: "typescript" },
+    ],
+  },
+};
+
 export const compareAgentProfiles: Record<string, AgentProfile> = {
   compareAgent: {
     agent: "compareAgent",
@@ -403,6 +423,7 @@ export const agentProfilesCategory: Record<string, Record<string, AgentProfile>>
   copy: copyAgentProfiles,
   array: arrayAgentProfiles,
   string: stringAgentProfiles,
+  code: codeAgentProfiles,
 };
 if (!restrictedFeature) {
   agentProfilesCategory.service = serviceAgentProfiles;
