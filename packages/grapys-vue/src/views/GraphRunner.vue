@@ -110,7 +110,7 @@ import { anthropicAgent } from "@graphai/anthropic_agent";
 import { browserlessAgent } from "@graphai/browserless_agent";
 
 import tinyswallowAgent, { modelLoad, loadEngine, CallbackReport } from "../agents/tinyswallow";
-import { codeRunnerAgent } from "../agents/code_runner";
+import codeRunnerAgent from "../agents/code_runner";
 import { textInputEvent } from "../agents/event";
 
 import { getGraphConfigs } from "../graph";
