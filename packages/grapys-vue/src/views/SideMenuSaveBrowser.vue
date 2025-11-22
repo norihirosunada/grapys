@@ -13,11 +13,13 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "../store";
+import { useCustomAgentStore } from "../store/customAgents";
 
 export default defineComponent({
   components: {},
   setup() {
     const store = useStore();
+    const customAgentStore = useCustomAgentStore();
 
     const save = () => {
       const dataStr = JSON.stringify(store.graphData);
@@ -29,6 +31,7 @@ export default defineComponent({
       try {
         if (data) {
           const graphData = JSON.parse(data);
+          customAgentStore.applyBundle(graphData?.metadata?.customAgents);
           store.loadData(graphData.metadata.data);
         }
       } catch (error) {

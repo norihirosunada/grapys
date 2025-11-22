@@ -20,6 +20,7 @@
 import { defineComponent, ref } from "vue";
 import { useStore } from "../store";
 import SideMenuButton from "../components/SideMenuButton.vue";
+import { useCustomAgentStore } from "../store/customAgents";
 
 export default defineComponent({
   name: "JsonDropLoader",
@@ -28,6 +29,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const customAgentStore = useCustomAgentStore();
 
     let file: null | File = null;
     const fileName = ref<string | null>("");
@@ -60,6 +62,7 @@ export default defineComponent({
       reader.onload = (event: ProgressEvent<FileReader>) => {
         try {
           const json = JSON.parse(event?.target?.result as string);
+          customAgentStore.applyBundle(json?.metadata?.customAgents);
           store.initFromGraphData(json);
           file = null;
           fileName.value = null;

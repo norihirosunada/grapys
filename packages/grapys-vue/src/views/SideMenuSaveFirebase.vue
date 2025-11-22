@@ -47,6 +47,7 @@
 import { defineComponent, onUnmounted, ref } from "vue";
 import { useStore } from "../store";
 import { useFirebaseStore } from "../store/firebase";
+import { useCustomAgentStore } from "../store/customAgents";
 import { serverTimestamp, doc, collection, setDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../utils/firebase/firebase";
 
@@ -62,6 +63,7 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const firebaseStore = useFirebaseStore();
+    const customAgentStore = useCustomAgentStore();
 
     const uid = firebaseStore?.firebaseUser?.uid;
     const path = `/users/${uid}/graphData`;
@@ -107,6 +109,7 @@ export default defineComponent({
       try {
         if (data) {
           const graphData = JSON.parse(data.jsonString);
+          customAgentStore.applyBundle(graphData?.metadata?.customAgents);
           store.loadData(graphData.metadata.data);
         }
       } catch (error) {

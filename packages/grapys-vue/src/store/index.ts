@@ -12,6 +12,7 @@ import {
 import { store2graphData } from "../utils/gui/graph";
 import { defineStore } from "pinia";
 import { graphs } from "../graph/nested";
+import { useCustomAgentStore } from "./customAgents";
 
 import { graphToGUIData } from "../utils/gui/utils";
 import type { GraphData } from "graphai";
@@ -49,8 +50,10 @@ export const useStore = defineStore("store", () => {
       return tmp;
     }, {});
   });
+  const customAgentStore = useCustomAgentStore();
+
   const graphData = computed(() => {
-    return store2graphData(currentData.value, graphs);
+    return store2graphData(currentData.value, graphs, customAgentStore.bundle);
   });
   const streamNodes = computed(() => {
     return nodes.value
