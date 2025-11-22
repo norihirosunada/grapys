@@ -168,6 +168,7 @@ export type GUIMessage = {
 export type GraphDataMetaData = {
   metadata?: {
     data?: HistoryPayload;
+    registry?: Record<string, AgentProfile>;
     forNested?: {
       output: Record<string, unknown>; // ComputedNode output
       outputs: InputOutputData[];

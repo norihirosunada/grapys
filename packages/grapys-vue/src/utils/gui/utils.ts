@@ -5,7 +5,6 @@ import {
   GUINodeDataRecord,
   GUINearestData,
   EdgeData,
-  AgentProfile,
   InputOutputData,
   NewEdgeStartEventData,
   NewEdgeData,
@@ -17,14 +16,16 @@ import {
   ParamData,
   NestedGraphList,
   GraphDataMetaData,
+  AgentProfile,
 } from "./type";
 import { inputs2dataSources, GraphData, isComputedNodeData, isStaticNodeData, DefaultParamsType, LoopData } from "graphai";
-import { agentProfiles } from "./data";
+import { builtinAgentProfiles } from "./data";
 import { store2graphData } from "./graph";
 
 const isTouch = (event: MouseEvent | TouchEvent): event is TouchEvent => {
   return "touches" in event;
 };
+const getProfiles = (profiles?: Record<string, AgentProfile>) => profiles ?? builtinAgentProfiles;
 export const getClientPos = (event: MouseEvent | TouchEvent) => {
   const clientX = isTouch(event) ? event.touches[0].clientX : event.clientX;
   const clientY = isTouch(event) ? event.touches[0].clientY : event.clientY;
@@ -49,13 +50,19 @@ const loop2loop = (graphLoop: LoopData): GUILoopData => {
   };
 };
 
-export const graphToGUIData = (graphData: GraphData & GraphDataMetaData) => {
+export const graphToGUIData = (
+  graphData: GraphData & GraphDataMetaData,
+  agentProfilesMap?: Record<string, AgentProfile>,
+) => {
+  const registry = graphData?.metadata?.registry ?? {};
+  const profiles = { ...getProfiles(agentProfilesMap), ...registry };
   if (graphData?.metadata?.data?.nodes && graphData?.metadata?.data?.edges) {
     const { nodes, edges, loop } = graphData?.metadata?.data ?? {};
     return {
       rawEdge: edges,
       rawNode: nodes,
       loop: loop2loop(loop ?? {}),
+      registry,
     };
   }
 
@@ -70,7 +77,7 @@ export const graphToGUIData = (graphData: GraphData & GraphDataMetaData) => {
   const getIndex = (nodeId: string, propId: string, key: keyof AgentProfile) => {
     const agent = node2agent[nodeId];
 
-    const indexes = agent ? (agentProfiles[agent][key] as InputOutputData[]) : [];
+    const indexes = agent ? (profiles[agent][key] as InputOutputData[]) : [];
     const index = indexes.findIndex((data) => data.name === propId);
     if (index === -1) {
       console.log(`${key} ${nodeId}.${propId} is not hit`);
@@ -165,6 +172,7 @@ export const graphToGUIData = (graphData: GraphData & GraphDataMetaData) => {
     rawEdge,
     rawNode,
     loop: loop2loop(graphLoop ?? {}),
+    registry,
   };
 };
 
@@ -173,12 +181,14 @@ export const edgeEnd2agentProfile = (
   nodeRecords: GUINodeDataRecord,
   sorceOrTarget: "source" | "target",
   nestedGraphs: NestedGraphList,
+  agentProfilesMap?: Record<string, AgentProfile>,
 ) => {
+  const profiles = getProfiles(agentProfilesMap);
   const node = nodeRecords[edgeEndPointData.nodeId];
   if (node && node.type === "computed") {
     const specializedAgent = node.data.guiAgentId ?? ""; // undefined is static node.
 
-    const profile = agentProfiles[specializedAgent];
+    const profile = profiles[specializedAgent];
     const IOData = (() => {
       // output
       if (sorceOrTarget === "source") {
@@ -191,7 +201,7 @@ export const edgeEnd2agentProfile = (
       // inputs
       if (profile.isNestedGraph) {
         // only for nested not map agent
-        return nestedGraphInputs(nestedGraphs[node.data?.nestedGraphIndex ?? 0].graph)[edgeEndPointData.index];
+        return nestedGraphInputs(nestedGraphs[node.data?.nestedGraphIndex ?? 0].graph, profiles)[edgeEndPointData.index];
       }
       return profile.inputs[edgeEndPointData.index];
     })();
@@ -369,7 +379,13 @@ const sameTargetEdge = (edge1: EdgeData | GUIEdgeData, edge2: EdgeData | GUIEdge
   return edge1.target.nodeId === edge2.target.nodeId && edge1.target.index === edge2.target.index;
 };
 
-export const isEdgeConnectale = (expectEdge: GUIEdgeData | null, edges: GUIEdgeData[], nodeRecords: GUINodeDataRecord, nestedGraphs: NestedGraphList) => {
+export const isEdgeConnectale = (
+  expectEdge: GUIEdgeData | null,
+  edges: GUIEdgeData[],
+  nodeRecords: GUINodeDataRecord,
+  nestedGraphs: NestedGraphList,
+  agentProfilesMap?: Record<string, AgentProfile>,
+) => {
   if (!expectEdge) {
     return false;
   }
@@ -383,7 +399,7 @@ export const isEdgeConnectale = (expectEdge: GUIEdgeData | null, edges: GUIEdgeD
   const existanceEdges = edges.filter((edge) => {
     return sameTargetEdge(edge, expectEdge);
   });
-  const profile = edgeEnd2agentProfile(expectEdge.target, nodeRecords, "target", nestedGraphs);
+  const profile = edgeEnd2agentProfile(expectEdge.target, nodeRecords, "target", nestedGraphs, agentProfilesMap);
   if (!profile) {
     // maybe static node
     return true;
@@ -452,12 +468,17 @@ export const getTransformStyle = (nodeData: GUINodeData, isDragging: boolean) =>
   };
 };
 
-export const getLoopWhileSources = (nodes: GUINodeData[], nestedGraphs: NestedGraphList) => {
+export const getLoopWhileSources = (
+  nodes: GUINodeData[],
+  nestedGraphs: NestedGraphList,
+  agentProfilesMap?: Record<string, AgentProfile>,
+) => {
+  const profiles = getProfiles(agentProfilesMap);
   return ["true"].concat(
     nodes.flatMap((node) => {
       const agent = node.data.guiAgentId;
       if (agent) {
-        const profile = agentProfiles[agent] || { outputs: [] };
+        const profile = profiles[agent] || { outputs: [] };
         const { outputs } = profile.isNestedGraph ? (nestedGraphs[node.data?.nestedGraphIndex ?? 0].graph?.metadata?.forNested ?? profile ?? {}) : profile;
         return (outputs ?? []).map((prop: InputOutputData) => `:${node.nodeId}.${prop.name}`);
       }
@@ -489,8 +510,11 @@ export const handleDownload = (graphData: GraphData & GraphDataMetaData) => {
   link.click();
 };
 
-export const nestedGraphInputs = (graphData: GraphData & GraphDataMetaData) => {
-  const nodes = graphData?.metadata?.data ? store2graphData(graphData?.metadata?.data, []).nodes : graphData.nodes;
+export const nestedGraphInputs = (graphData: GraphData & GraphDataMetaData, agentProfilesMap?: Record<string, AgentProfile>) => {
+  const profiles = getProfiles(agentProfilesMap);
+  const nodes = graphData?.metadata?.data
+    ? store2graphData(graphData?.metadata?.data, [], profiles, graphData?.metadata?.registry ?? {}).nodes
+    : graphData.nodes;
   const staticInputs = Object.keys(nodes)
     .filter((nodeId) => {
       return isStaticNodeData(nodes[nodeId]);

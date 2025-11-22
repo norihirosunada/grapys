@@ -395,7 +395,7 @@ export const nestedAgentProfiles: Record<string, AgentProfile> = {
   },
 };
 
-export const agentProfilesCategory: Record<string, Record<string, AgentProfile>> = {
+export const builtinAgentProfilesCategory: Record<string, Record<string, AgentProfile>> = {
   userInput: userInputAgentProfiles,
   llm: llmAgentProfiles,
   compare: compareAgentProfiles,
@@ -405,14 +405,19 @@ export const agentProfilesCategory: Record<string, Record<string, AgentProfile>>
   string: stringAgentProfiles,
 };
 if (!restrictedFeature) {
-  agentProfilesCategory.service = serviceAgentProfiles;
-  agentProfilesCategory.test = testAgentProfiles;
-  agentProfilesCategory.graph = nestedAgentProfiles;
+  builtinAgentProfilesCategory.service = serviceAgentProfiles;
+  builtinAgentProfilesCategory.test = testAgentProfiles;
+  builtinAgentProfilesCategory.graph = nestedAgentProfiles;
 }
 
-export const agentProfiles: Record<string, AgentProfile> = Object.values(agentProfilesCategory).reduce((tmp, current) => {
-  return { ...tmp, ...current };
-}, {});
+export const builtinAgentProfiles: Record<string, AgentProfile> = Object.values(builtinAgentProfilesCategory).reduce(
+  (tmp, current) => {
+    return { ...tmp, ...current };
+  },
+  {},
+);
+
+export const agentProfiles = builtinAgentProfiles;
 
 export const staticNodeParams: AgentProfile = {
   inputs: [{ name: "update" }],

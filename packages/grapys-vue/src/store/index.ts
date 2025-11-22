@@ -8,6 +8,7 @@ import {
   HistoryData,
   HistoryPayload,
   GUILoopData,
+  AgentProfile,
 } from "../utils/gui/type";
 import { store2graphData } from "../utils/gui/graph";
 import { defineStore } from "pinia";
@@ -23,12 +24,36 @@ export const useStore = defineStore("store", () => {
     edges: [],
     loop: { loopType: "none" },
   });
+  const customAgentProfiles = ref<Record<string, AgentProfile>>({});
   const index = ref(0);
 
   const graphAIResults = ref<Record<string, unknown>>({});
 
+  const agentProfiles = computed(() => {
+    // Lazy import to avoid circular dependencies at module eval time.
+    const { builtinAgentProfiles } = require("../utils/gui/data");
+    return { ...builtinAgentProfiles, ...customAgentProfiles.value } as Record<string, AgentProfile>;
+  });
+
+  const customAgentProfilesCategory = computed(() => {
+    return Object.keys(customAgentProfiles.value).reduce((tmp: Record<string, AgentProfile>, key) => {
+      tmp[key] = customAgentProfiles.value[key];
+      return tmp;
+    }, {});
+  });
+
+  const agentProfilesCategory = computed(() => {
+    const { builtinAgentProfilesCategory } = require("../utils/gui/data");
+    const categories: Record<string, Record<string, AgentProfile>> = { ...builtinAgentProfilesCategory };
+    if (Object.keys(customAgentProfilesCategory.value).length) {
+      categories.custom = customAgentProfilesCategory.value;
+    }
+    return categories;
+  });
+
   const reset = () => {
     updateData([], [], { loopType: "none" }, "reset", true);
+    customAgentProfiles.value = {};
   };
 
   const nodes = computed(() => {
@@ -50,7 +75,7 @@ export const useStore = defineStore("store", () => {
     }, {});
   });
   const graphData = computed(() => {
-    return store2graphData(currentData.value, graphs);
+    return store2graphData(currentData.value, graphs, agentProfiles.value, customAgentProfiles.value);
   });
   const streamNodes = computed(() => {
     return nodes.value
@@ -97,8 +122,17 @@ export const useStore = defineStore("store", () => {
   };
 
   const initFromGraphData = (graph: GraphData) => {
-    const { rawEdge, rawNode, loop: loopData } = graphToGUIData(graph);
+    const { rawEdge, rawNode, loop: loopData, registry } = graphToGUIData(graph, agentProfiles.value);
+    customAgentProfiles.value = registry ?? {};
     initData(rawNode, rawEdge, loopData);
+  };
+
+  const registerAgentProfile = (id: string, profile: AgentProfile) => {
+    customAgentProfiles.value = { ...customAgentProfiles.value, [id]: profile };
+  };
+
+  const setAgentProfiles = (profiles: Record<string, AgentProfile>) => {
+    customAgentProfiles.value = { ...profiles };
   };
 
   // node
@@ -254,12 +288,20 @@ export const useStore = defineStore("store", () => {
     streamNodes,
     resultNodes,
 
+    agentProfiles,
+    agentProfilesCategory,
+    customAgentProfiles,
+
     undoable,
     redoable,
 
     // graphAIResult
     setResult,
     graphAIResults,
+
+    // agent registry
+    registerAgentProfile,
+    setAgentProfiles,
 
     // for nested agent
     nestedGraphs: graphs,

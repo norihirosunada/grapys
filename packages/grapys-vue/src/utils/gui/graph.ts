@@ -1,7 +1,17 @@
-import type { GUINodeData, GUIEdgeData, GUILoopData, GUINodeDataRecord, HistoryPayload, NestedGraphList, InputOutputData, GraphDataMetaData } from "./type";
+import type {
+  GUINodeData,
+  GUIEdgeData,
+  GUILoopData,
+  GUINodeDataRecord,
+  HistoryPayload,
+  NestedGraphList,
+  InputOutputData,
+  GraphDataMetaData,
+  AgentProfile,
+} from "./type";
 import type { GraphData, NodeData, StaticNodeData, LoopData } from "graphai";
 import { edgeEnd2agentProfile } from "./utils";
-import { agentProfiles } from "./data";
+import { builtinAgentProfiles } from "./data";
 import { resultsOf } from "./result";
 
 // import { graphs } from "../../graph";
@@ -18,7 +28,12 @@ type SourceTargetTmpObject = Record<string, Record<string, SourceTargetIntermedi
 type NodeEdgeMap = Record<string, string | string[]>;
 type EdgeRecord = Record<string, NodeEdgeMap>;
 
-export const edges2inputs = (edges: GUIEdgeData[], nodes: GUINodeData[], nestedGraphs: NestedGraphList) => {
+export const edges2inputs = (
+  edges: GUIEdgeData[],
+  nodes: GUINodeData[],
+  nestedGraphs: NestedGraphList,
+  agentProfilesMap: Record<string, AgentProfile> = builtinAgentProfiles,
+) => {
   const nodeRecords = nodes.reduce((tmp: GUINodeDataRecord, current) => {
     tmp[current.nodeId] = current;
     return tmp;
@@ -29,7 +44,7 @@ export const edges2inputs = (edges: GUIEdgeData[], nodes: GUINodeData[], nestedG
       const { source: sourceEdge, target: targetEdge } = edge;
 
       const sourceData = (() => {
-        const sourceAgentProfile = edgeEnd2agentProfile(sourceEdge, nodeRecords, "source", nestedGraphs);
+        const sourceAgentProfile = edgeEnd2agentProfile(sourceEdge, nodeRecords, "source", nestedGraphs, agentProfilesMap);
 
         if (sourceAgentProfile) {
           const props = sourceAgentProfile.IOData?.name;
@@ -38,7 +53,7 @@ export const edges2inputs = (edges: GUIEdgeData[], nodes: GUINodeData[], nestedG
         return `:${sourceEdge.nodeId}`;
       })();
       const targetPropId = (() => {
-        const targetAgentProfile = edgeEnd2agentProfile(targetEdge, nodeRecords, "target", nestedGraphs);
+        const targetAgentProfile = edgeEnd2agentProfile(targetEdge, nodeRecords, "target", nestedGraphs, agentProfilesMap);
         if (targetAgentProfile) {
           const targetProp = targetAgentProfile.IOData?.name;
           return targetProp;
@@ -67,7 +82,7 @@ export const edges2inputs = (edges: GUIEdgeData[], nodes: GUINodeData[], nestedG
   return Object.keys(records).reduce((edgeRecord: EdgeRecord, nodeId) => {
     const inputsRecord = Object.keys(records[nodeId]).reduce((nodeEdgeMap: NodeEdgeMap, propId) => {
       const { targetIndex } = records[nodeId][propId][0];
-      const targetProfile = edgeEnd2agentProfile({ nodeId, index: targetIndex }, nodeRecords, "target", nestedGraphs);
+      const targetProfile = edgeEnd2agentProfile({ nodeId, index: targetIndex }, nodeRecords, "target", nestedGraphs, agentProfilesMap);
       if (targetProfile && targetProfile.IOData.type === "wait") {
         nodeEdgeMap[propId] = records[nodeId][propId].map((data) => data.sourceData);
       } else {
@@ -96,16 +111,22 @@ const loop2LoopObj = (loop: GUILoopData): LoopData | undefined => {
   return undefined;
 };
 
-export const store2graphData = (currentData: HistoryPayload, nestedGraphs: NestedGraphList) => {
+export const store2graphData = (
+  currentData: HistoryPayload,
+  nestedGraphs: NestedGraphList,
+  agentProfilesMap: Record<string, AgentProfile> = builtinAgentProfiles,
+  customRegistry: Record<string, AgentProfile> = {},
+) => {
   const { nodes, edges, loop } = currentData;
-  const edgeObject = edges2inputs(edges, nodes, nestedGraphs);
+  const profiles = { ...agentProfilesMap, ...customRegistry };
+  const edgeObject = edges2inputs(edges, nodes, nestedGraphs, profiles);
 
   const nestedOutput: Record<string, string> = {};
   const nestedOutputs: InputOutputData[] = [];
 
   const newNodes = nodes.reduce((tmp: Record<string, NodeData>, node) => {
     const { guiAgentId } = node.data;
-    const profile = agentProfiles[guiAgentId ?? ""];
+    const profile = profiles[guiAgentId ?? ""];
     const inputs = profile?.inputSchema ? resultsOf(profile.inputSchema as NodeEdgeMap, edgeObject[node.nodeId]) : edgeObject[node.nodeId];
 
     // Treat if/unless like a schema
@@ -131,7 +152,11 @@ export const store2graphData = (currentData: HistoryPayload, nestedGraphs: Neste
         // retry ?
         ...(profile.isNestedGraph || profile.isMap
           ? {
-              graph: convertGraph2Graph(nestedGraphs[node.data?.nestedGraphIndex ?? 0].graph, []),
+              graph: convertGraph2Graph(
+                nestedGraphs[node.data?.nestedGraphIndex ?? 0].graph,
+                [],
+                profiles,
+              ),
             }
           : {}),
       };
@@ -159,6 +184,7 @@ export const store2graphData = (currentData: HistoryPayload, nestedGraphs: Neste
     loop: loop2LoopObj(loop),
     metadata: {
       data: currentData,
+      registry: customRegistry,
       forNested: {
         output: nestedOutput,
         outputs: nestedOutputs,
@@ -169,10 +195,19 @@ export const store2graphData = (currentData: HistoryPayload, nestedGraphs: Neste
 };
 
 // convert template graph (graph or metadata) to graph
-export const convertGraph2Graph = (graphData: GraphData & GraphDataMetaData, nestedGraphs: NestedGraphList) => {
+export const convertGraph2Graph = (
+  graphData: GraphData & GraphDataMetaData,
+  nestedGraphs: NestedGraphList,
+  agentProfilesMap: Record<string, AgentProfile> = builtinAgentProfiles,
+) => {
   const graph =
     graphData?.metadata?.data?.nodes && graphData?.metadata?.data?.edges
-      ? store2graphData(graphData?.metadata.data as HistoryPayload, nestedGraphs)
+      ? store2graphData(
+          graphData?.metadata.data as HistoryPayload,
+          nestedGraphs,
+          agentProfilesMap,
+          graphData?.metadata?.registry ?? {},
+        )
       : graphData;
   const { version, nodes, loop } = graph;
   return { version, nodes, loop };

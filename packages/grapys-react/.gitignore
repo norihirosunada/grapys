@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+src/config/project.ts
 
 # Editor directories and files
 .vscode/*
