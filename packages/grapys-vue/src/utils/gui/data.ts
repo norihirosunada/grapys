@@ -410,9 +410,25 @@ if (!restrictedFeature) {
   agentProfilesCategory.graph = nestedAgentProfiles;
 }
 
-export const agentProfiles: Record<string, AgentProfile> = Object.values(agentProfilesCategory).reduce((tmp, current) => {
-  return { ...tmp, ...current };
-}, {});
+export const agentProfiles: Record<string, AgentProfile> = {};
+Object.values(agentProfilesCategory).forEach((profiles) => {
+  Object.assign(agentProfiles, profiles);
+});
+
+export const mergeCustomAgentProfiles = (customCategories?: Record<string, Record<string, AgentProfile>>) => {
+  if (!customCategories) {
+    return;
+  }
+  Object.entries(customCategories).forEach(([category, profiles]) => {
+    if (!agentProfilesCategory[category]) {
+      agentProfilesCategory[category] = {};
+    }
+    Object.entries(profiles).forEach(([id, profile]) => {
+      agentProfilesCategory[category][id] = profile;
+      agentProfiles[id] = profile;
+    });
+  });
+};
 
 export const staticNodeParams: AgentProfile = {
   inputs: [{ name: "update" }],

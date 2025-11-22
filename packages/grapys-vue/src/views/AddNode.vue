@@ -27,22 +27,36 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, ref, watch } from "vue";
 import { useStore } from "../store";
-import { agentProfilesCategory, agentProfiles } from "../utils/gui/data";
 import { getDefaultParams } from "../utils/gui/utils";
 import SideMenuButton from "../components/SideMenuButton.vue";
+import { useCustomAgentStore } from "../store/customAgents";
 // import { graphs } from "../graph";
 
 export default defineComponent({
   components: { SideMenuButton },
   setup() {
-    const nodesKey = Object.keys(agentProfiles);
+    const customAgentStore = useCustomAgentStore();
+    const agentProfilesCategory = computed(() => customAgentStore.mergedCategories);
+    const mergedProfiles = computed(() => customAgentStore.mergedProfiles);
+    const nodesKey = computed(() => Object.keys(mergedProfiles.value));
+
     const nodeId = ref("");
-    const agent = ref(nodesKey[0]);
+    const agent = ref("StaticNode");
     const isError = ref(false);
 
     const store = useStore();
+
+    watch(
+      nodesKey,
+      (keys) => {
+        if (keys.length > 0 && !keys.includes(agent.value)) {
+          agent.value = keys[0];
+        }
+      },
+      { immediate: true },
+    );
 
     watch(nodeId, () => {
       isError.value = false;
@@ -59,7 +73,7 @@ export default defineComponent({
       }
 
       const isStatic = agent.value === "StaticNode";
-      const targetAgent = agentProfiles[agent.value] ?? {};
+      const targetAgent = mergedProfiles.value[agent.value] ?? {};
       const params = getDefaultParams(targetAgent.params ?? []);
 
       const data = isStatic
@@ -69,7 +83,9 @@ export default defineComponent({
             guiAgentId: agent.value,
             params,
             ...(targetAgent.agents ? { agentIndex: 0 } : {}),
-            ...(targetAgent.isNestedGraph || targetAgent.isMap ? { nestedGraphIndex: 0, nestedGraphId: store.nestedGraphs[0].id } : {}),
+            ...(targetAgent.isNestedGraph || targetAgent.isMap
+              ? { nestedGraphIndex: 0, nestedGraphId: store.nestedGraphs[0].id }
+              : {}),
           };
 
       store.pushNode({

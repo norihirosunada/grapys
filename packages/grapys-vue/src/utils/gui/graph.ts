@@ -1,8 +1,19 @@
-import type { GUINodeData, GUIEdgeData, GUILoopData, GUINodeDataRecord, HistoryPayload, NestedGraphList, InputOutputData, GraphDataMetaData } from "./type";
+import type {
+  GUINodeData,
+  GUIEdgeData,
+  GUILoopData,
+  GUINodeDataRecord,
+  HistoryPayload,
+  NestedGraphList,
+  InputOutputData,
+  GraphDataMetaData,
+  CustomAgentBundle,
+} from "./type";
 import type { GraphData, NodeData, StaticNodeData, LoopData } from "graphai";
 import { edgeEnd2agentProfile } from "./utils";
 import { agentProfiles } from "./data";
 import { resultsOf } from "./result";
+import { CUSTOM_AGENT_SCHEMA_VERSION } from "../../store/customAgents";
 
 // import { graphs } from "../../graph";
 
@@ -96,7 +107,7 @@ const loop2LoopObj = (loop: GUILoopData): LoopData | undefined => {
   return undefined;
 };
 
-export const store2graphData = (currentData: HistoryPayload, nestedGraphs: NestedGraphList) => {
+export const store2graphData = (currentData: HistoryPayload, nestedGraphs: NestedGraphList, customAgents?: CustomAgentBundle) => {
   const { nodes, edges, loop } = currentData;
   const edgeObject = edges2inputs(edges, nodes, nestedGraphs);
 
@@ -163,6 +174,14 @@ export const store2graphData = (currentData: HistoryPayload, nestedGraphs: Neste
         output: nestedOutput,
         outputs: nestedOutputs,
       },
+      ...(customAgents?.categories && Object.keys(customAgents.categories).length > 0
+        ? {
+            customAgents: {
+              version: customAgents.version ?? CUSTOM_AGENT_SCHEMA_VERSION,
+              categories: customAgents.categories,
+            },
+          }
+        : {}),
     },
   };
   return newGraphData;

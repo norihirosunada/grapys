@@ -1,4 +1,6 @@
 <template>
+  <CustomNodeDialog />
+
   <AddNode />
 
   <hr class="my-1 border-t border-gray-400" />
@@ -83,8 +85,10 @@ import { signOut } from "firebase/auth";
 
 import { useStore } from "../store";
 import { useFirebaseStore } from "../store/firebase";
+import { useCustomAgentStore } from "../store/customAgents";
 
 import AddNode from "./AddNode.vue";
+import CustomNodeDialog from "./CustomNodeDialog.vue";
 import SideMenuSaveBrowser from "./SideMenuSaveBrowser.vue";
 import SideMenuSaveFirebase from "./SideMenuSaveFirebase.vue";
 import DataLoader from "./DataLoader.vue";
@@ -100,6 +104,7 @@ import { enableFirebase } from "../config/project";
 export default defineComponent({
   components: {
     AddNode,
+    CustomNodeDialog,
     ApiKey,
     SideMenuSaveBrowser,
     SideMenuSaveFirebase,
@@ -110,10 +115,12 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const firebaseStore = useFirebaseStore();
+    const customAgentStore = useCustomAgentStore();
 
     const setGraph = async (graph: GraphData) => {
       store.reset();
       await nextTick(); // to reset edge position. Due to duplicate edge keys, the position will be incorrect.
+      customAgentStore.applyBundle(graph?.metadata?.customAgents);
       store.initFromGraphData(graph);
     };
 

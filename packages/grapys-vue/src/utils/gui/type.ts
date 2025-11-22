@@ -146,6 +146,11 @@ export type AgentProfile = {
   unless?: string;
 };
 
+export type CustomAgentBundle = {
+  version: number;
+  categories: Record<string, Record<string, AgentProfile>>;
+};
+
 export type LoopDataType = "while" | "count" | "none";
 export type GUILoopData = {
   loopType: LoopDataType;
@@ -172,6 +177,7 @@ export type GraphDataMetaData = {
       output: Record<string, unknown>; // ComputedNode output
       outputs: InputOutputData[];
     };
+    customAgents?: CustomAgentBundle;
   };
 };
 
