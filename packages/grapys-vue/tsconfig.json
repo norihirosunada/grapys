@@ -14,10 +14,12 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@storybook/vue3": ["src/typings/storybook-vue3"],
+      "@storybook/addon-actions": ["src/typings/storybook-addon-actions"]
     },
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.d.ts"],
   "exclude": ["node_modules"]
 }

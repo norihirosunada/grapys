@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref, computed } from "vue";
-import Node2 from "./Node2.vue";
+import Node2 from "../components/Node2";
 import Edge from "./Edge.vue";
 import Loop from "./Loop.vue";
 
