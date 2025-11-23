@@ -110,6 +110,7 @@ import { anthropicAgent } from "@graphai/anthropic_agent";
 import { browserlessAgent } from "@graphai/browserless_agent";
 
 import tinyswallowAgent, { modelLoad, loadEngine, CallbackReport } from "../agents/tinyswallow";
+import typescriptNodeAgentInfo from "../agents/typescriptNode";
 import { textInputEvent } from "../agents/event";
 
 import { getGraphConfigs } from "../graph";
@@ -170,6 +171,7 @@ export default defineComponent({
           geminiAgent,
           eventAgent,
           tinyswallowAgent,
+          [typescriptNodeAgentInfo.name]: typescriptNodeAgentInfo,
           browserlessAgent,
         },
         {

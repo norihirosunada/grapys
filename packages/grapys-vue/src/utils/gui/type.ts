@@ -121,7 +121,7 @@ export type NearestData = {
 export type InputOutputType = "text" | "array" | "message" | "data" | "wait" | "boolean";
 export type InputOutputData = { name: string; type?: InputOutputType; mapTo?: string };
 
-export type ParamType = "string" | "text" | "data" | "boolean" | "float" | "int" | "enum";
+export type ParamType = "string" | "text" | "data" | "boolean" | "float" | "int" | "enum" | "code";
 
 export type ParamData = {
   name: string;
