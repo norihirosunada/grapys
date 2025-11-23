@@ -213,6 +213,23 @@ export const dataAgentProfiles: Record<string, AgentProfile> = {
     params: [],
   },
 };
+
+export const codeAgentProfiles: Record<string, AgentProfile> = {
+  typescriptNodeAgent: {
+    agent: "typescriptNodeAgent",
+    inputs: [{ name: "inputs", type: "data" }],
+    outputs: [{ name: "result", type: "data" }, { name: "logs", type: "array" }],
+    params: [
+      {
+        name: "code",
+        type: "code",
+        defaultValue:
+          "export default async function main(inputs, params) {\n  return { inputs, params, timestamp: Date.now() };\n}\n",
+      },
+      { name: "isResult", type: "boolean", defaultValue: true },
+    ],
+  },
+};
 export const copyAgentProfiles: Record<string, AgentProfile> = {
   itemToArrayAgent: {
     agent: "copyAgent",
@@ -400,6 +417,7 @@ export const agentProfilesCategory: Record<string, Record<string, AgentProfile>>
   llm: llmAgentProfiles,
   compare: compareAgentProfiles,
   data: dataAgentProfiles,
+  code: codeAgentProfiles,
   copy: copyAgentProfiles,
   array: arrayAgentProfiles,
   string: stringAgentProfiles,

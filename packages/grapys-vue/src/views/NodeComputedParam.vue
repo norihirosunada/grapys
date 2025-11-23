@@ -27,6 +27,19 @@
         @wheel.stop
       ></textarea>
     </div>
+    <div v-else-if="param.type === 'code'">
+      <textarea
+        ref="codeAreaRef"
+        :rows="codeRows"
+        class="w-full resize-none rounded-md border border-gray-300 bg-gray-50 p-2 font-mono text-xs text-black"
+        v-model="codeValue"
+        @mousedown.stop
+        @touchstart.stop
+        @wheel.stop
+      ></textarea>
+      <p v-if="codeError" class="mt-1 whitespace-pre-wrap text-xs text-red-500">{{ codeError }}</p>
+      <p v-else class="mt-1 text-[11px] text-gray-500">Code compiles to JavaScript for sandboxed execution.</p>
+    </div>
     <div v-else-if="param.type === 'int'">
       <!-- TODO convert int after user input: min, max, defaultValue -->
       <input
@@ -71,6 +84,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType, ref, onBeforeUnmount, onMounted, watch } from "vue";
+import ts from "typescript";
 import type { ParamData, ApplicationData } from "../utils/gui/type";
 
 import { useStore } from "../store";
@@ -97,8 +111,10 @@ export default defineComponent({
     const textareaRef = ref();
     const inputRef = ref();
     const selectFormRef = ref();
+    const codeAreaRef = ref();
 
     const rows = ref(3);
+    const codeRows = ref(8);
 
     const key = props.param.name;
     const value = (props.appData.params ?? {})[key];
@@ -106,7 +122,9 @@ export default defineComponent({
     const inputValue = ref(value ?? "");
     const booleanValue = ref(value === true ? "true" : "false");
     const textAreaValue = ref(String(value ?? ""));
+    const codeValue = ref(String(value ?? ""));
     const enumValue = ref(value ?? (props.param.type === "enum" ? props.param?.values?.[0] : ""));
+    const codeError = ref<string | null>(null);
 
     watch(
       () => props.appData,
@@ -122,6 +140,9 @@ export default defineComponent({
           } else {
             textAreaValue.value = updateValue;
           }
+        }
+        if (props.param.type === "code" && updateValue !== codeValue.value) {
+          codeValue.value = typeof updateValue === "string" ? updateValue : String(updateValue ?? "");
         }
         if (props.param.type === "string" && updateValue !== inputValue.value) {
           inputValue.value = updateValue;
@@ -144,17 +165,52 @@ export default defineComponent({
         // inputValue
       },
     );
+    const validateCode = (source: string) => {
+      try {
+        if (/\bimport\s+|\brequire\s*\(/.test(source)) {
+          codeError.value = "Module imports are not allowed inside the TypeScript node.";
+          return;
+        }
+        ts.transpileModule(source, {
+          compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+        });
+        codeError.value = null;
+      } catch (error) {
+        codeError.value = error instanceof Error ? error.message : String(error);
+      }
+    };
+
+    watch(
+      () => codeValue.value,
+      (value) => {
+        if (props.param.type === "code") {
+          validateCode(value);
+        }
+      },
+      { immediate: true },
+    );
+
     const focusEvent = (event: FocusEvent) => {
       if (event.target instanceof HTMLTextAreaElement) {
         ctx.emit("focusEvent");
-        rows.value = 10;
+        if (props.param.type === "code") {
+          codeRows.value = 12;
+        } else {
+          rows.value = 10;
+        }
       }
     };
     const blurEvent = (event: FocusEvent) => {
       if (event.target instanceof HTMLTextAreaElement) {
-        rows.value = 3;
-        ctx.emit("blurEvent");
-        store.updateNodeParam(props.nodeIndex, key, textAreaValue.value);
+        if (props.param.type === "code") {
+          codeRows.value = 8;
+          ctx.emit("blurEvent");
+          store.updateNodeParam(props.nodeIndex, key, codeValue.value);
+        } else {
+          rows.value = 3;
+          ctx.emit("blurEvent");
+          store.updateNodeParam(props.nodeIndex, key, textAreaValue.value);
+        }
       }
     };
     const blurUpdateEvent = () => {
@@ -179,6 +235,10 @@ export default defineComponent({
         textareaRef.value.addEventListener("focus", focusEvent);
         textareaRef.value.addEventListener("blur", blurEvent);
       }
+      if (codeAreaRef.value) {
+        codeAreaRef.value.addEventListener("focus", focusEvent);
+        codeAreaRef.value.addEventListener("blur", blurEvent);
+      }
       if (inputRef.value) {
         inputRef.value.addEventListener("blur", blurUpdateEvent);
       }
@@ -187,6 +247,10 @@ export default defineComponent({
       if (textareaRef.value) {
         textareaRef.value.removeEventListener("focus", focusEvent);
         textareaRef.value.removeEventListener("blur", blurEvent);
+      }
+      if (codeAreaRef.value) {
+        codeAreaRef.value.removeEventListener("focus", focusEvent);
+        codeAreaRef.value.removeEventListener("blur", blurEvent);
       }
       if (inputRef.value) {
         inputRef.value.removeEventListener("blur", blurUpdateEvent);
@@ -197,16 +261,20 @@ export default defineComponent({
       booleanValue,
       inputValue,
       textAreaValue,
+      codeValue,
       enumValue,
+      codeError,
 
       selectUpdate,
       enumUpdate,
 
       inputRef,
       textareaRef,
+      codeAreaRef,
       selectFormRef,
 
       rows,
+      codeRows,
     };
   },
 });
