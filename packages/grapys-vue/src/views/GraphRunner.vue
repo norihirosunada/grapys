@@ -171,7 +171,7 @@ export default defineComponent({
           geminiAgent,
           eventAgent,
           tinyswallowAgent,
-          typescriptNodeAgentInfo,
+          [typescriptNodeAgentInfo.name]: typescriptNodeAgentInfo,
           browserlessAgent,
         },
         {
